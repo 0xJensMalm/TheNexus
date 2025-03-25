@@ -1,17 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
+import theme from '../theme';
 
 const TerminalContainer = styled.div`
-  background-color: #16213e;
-  border: 1px solid #444;
+  background-color: ${theme.colors.background.secondary};
+  border: 1px solid ${theme.colors.border.primary};
   padding: 0;
-  font-family: 'IBM Plex Mono', 'Courier New', monospace;
-  color: #e0e0e0;
-  height: 300px;
+  font-family: ${theme.fonts.primary};
+  color: ${theme.colors.text.primary};
   display: flex;
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  height: 300px; /* Reduced height since status screen was removed */
   
   &::before {
     content: "";
@@ -35,21 +36,21 @@ const TerminalHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 1rem;
-  background-color: #2a2a40;
-  border-bottom: 1px solid #444;
+  background-color: ${theme.colors.background.tertiary};
+  border-bottom: 1px solid ${theme.colors.border.primary};
 `;
 
 const TerminalTitle = styled.div`
   font-weight: 500;
-  font-size: 0.8rem;
-  color: #e6c07b;
+  font-size: ${theme.fonts.sizes.sm};
+  color: ${theme.colors.text.accent};
   text-transform: uppercase;
   letter-spacing: 1px;
 `;
 
 const TerminalStatus = styled.div`
-  font-size: 0.7rem;
-  color: ${props => props.active ? '#98c379' : '#777'};
+  font-size: ${theme.fonts.sizes.xs};
+  color: ${props => props.active ? theme.colors.text.success : theme.colors.text.secondary};
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -60,7 +61,7 @@ const TerminalStatus = styled.div`
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background-color: ${props => props.active ? '#98c379' : '#777'};
+    background-color: ${props => props.active ? theme.colors.text.success : theme.colors.text.secondary};
   }
 `;
 
@@ -71,17 +72,16 @@ const TerminalOutput = styled.div`
   position: relative;
   z-index: 2;
 
-  /* Scrollbar styling */
   &::-webkit-scrollbar {
     width: 6px;
   }
   
   &::-webkit-scrollbar-track {
-    background: #16213e;
+    background: ${theme.colors.background.secondary};
   }
   
   &::-webkit-scrollbar-thumb {
-    background: #444;
+    background: ${theme.colors.border.primary};
     border-radius: 3px;
   }
 `;
@@ -92,20 +92,20 @@ const MessageContainer = styled.div`
 `;
 
 const SystemMessage = styled.div`
-  color: #61afef;
+  color: ${theme.colors.text.info};
   font-style: italic;
   opacity: 0.8;
-  border-left: 2px solid #61afef;
+  border-left: 2px solid ${theme.colors.text.info};
   padding-left: 0.5rem;
   margin: 0.5rem 0;
 `;
 
 const NexusMessage = styled.div`
-  color: #98c379;
+  color: ${theme.colors.text.success};
 `;
 
 const PlayerMessage = styled.div`
-  color: ${props => props.isCurrentPlayer ? '#e6c07b' : '#c678dd'};
+  color: ${props => props.isCurrentPlayer ? theme.colors.text.accent : theme.colors.text.purple};
 `;
 
 const MessageSender = styled.span`
@@ -123,15 +123,15 @@ const MessageContent = styled.div`
 const TerminalInputContainer = styled.div`
   display: flex;
   align-items: center;
-  border-top: 1px solid #444;
+  border-top: 1px solid ${theme.colors.border.primary};
   padding: 0.75rem 1rem;
-  background-color: #2a2a40;
+  background-color: ${theme.colors.background.tertiary};
   position: relative;
   z-index: 2;
 `;
 
 const TerminalPrompt = styled.div`
-  color: ${props => props.active ? '#61afef' : '#777'};
+  color: ${props => props.active ? theme.colors.text.info : theme.colors.text.secondary};
   margin-right: 0.5rem;
   font-weight: 600;
 `;
@@ -140,8 +140,8 @@ const InputField = styled.input`
   flex: 1;
   background-color: transparent;
   border: none;
-  color: ${props => props.disabled ? '#777' : '#e0e0e0'};
-  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  color: ${props => props.disabled ? theme.colors.text.secondary : theme.colors.text.primary};
+  font-family: ${theme.fonts.primary};
   font-size: 0.9rem;
   
   &:focus {
@@ -149,13 +149,13 @@ const InputField = styled.input`
   }
   
   &::placeholder {
-    color: #555;
+    color: ${theme.colors.border.primary};
   }
 `;
 
 const Timestamp = styled.span`
-  font-size: 0.7rem;
-  color: #777;
+  font-size: ${theme.fonts.sizes.xs};
+  color: ${theme.colors.text.secondary};
   margin-left: 0.5rem;
 `;
 
@@ -167,6 +167,7 @@ function TerminalUI({
 }) {
   const [input, setInput] = useState('');
   const outputRef = useRef(null);
+  const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
   
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -174,6 +175,15 @@ function TerminalUI({
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
   }, [messages]);
+  
+  // Update the time displayed in the status screen
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString());
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
   
   const handleSubmit = (e) => {
     e.preventDefault();

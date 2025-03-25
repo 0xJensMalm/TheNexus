@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import NexusVisualization from './NexusVisualization';
@@ -86,6 +86,118 @@ const TerminalsContainer = styled.div`
   overflow-y: auto;
   background-color: ${theme.colors.background.primary};
   border-left: 1px solid ${theme.colors.border.primary};
+  position: relative;
+  min-width: 500px;
+  justify-content: space-between;
+`;
+
+const TerminalNavigation = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+`;
+
+const NavButton = styled.button`
+  background-color: ${theme.colors.background.tertiary};
+  border: 1px solid ${theme.colors.border.primary};
+  color: ${theme.colors.text.primary};
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  font-family: ${theme.fonts.primary};
+  font-size: ${theme.fonts.sizes.sm};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: ${theme.colors.background.secondary};
+    color: ${theme.colors.text.accent};
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    &:hover {
+      background-color: ${theme.colors.background.tertiary};
+      color: ${theme.colors.text.primary};
+    }
+  }
+`;
+
+const TerminalStatus = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ${theme.fonts.primary};
+  font-size: ${theme.fonts.sizes.sm};
+  color: ${theme.colors.text.secondary};
+`;
+
+// Status Screen Components
+const StatusScreenContainer = styled.div`
+  background-color: #000;
+  border: 1px solid ${theme.colors.border.primary};
+  height: 300px; /* Increased height for more square proportions */
+  width: 100%; /* Match the width of the terminal */
+  margin-top: auto; /* Push to bottom of container */
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 50%,
+      rgba(0, 30, 60, 0.1) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    opacity: 0.3;
+    z-index: 1;
+  }
+`;
+
+const StatusScreenHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0.8rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-bottom: 1px solid ${theme.colors.border.primary};
+  font-size: ${theme.fonts.sizes.xs};
+  color: ${theme.colors.text.secondary};
+`;
+
+const StatusScreenTitle = styled.div`
+  color: ${theme.colors.text.info};
+  font-size: ${theme.fonts.sizes.xs};
+  text-transform: uppercase;
+  letter-spacing: 1px;
+`;
+
+const StatusScreenContent = styled.div`
+  height: calc(100% - 24px);
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+`;
+
+const StatusPlaceholder = styled.div`
+  color: ${theme.colors.text.secondary};
+  font-size: ${theme.fonts.sizes.xs};
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
 `;
 
 function GameSession({ sessionId: propSessionId }) {
@@ -101,6 +213,7 @@ function GameSession({ sessionId: propSessionId }) {
     { id: 'player-1', username: 'User' }
   ]);
   const [activePlayerIndex, setActivePlayerIndex] = useState(0);
+  const [visibleTerminalIndex, setVisibleTerminalIndex] = useState(0);
   const [isConnected, setIsConnected] = useState(true);
   const [messages, setMessages] = useState([
     {
@@ -110,10 +223,22 @@ function GameSession({ sessionId: propSessionId }) {
       type: 'system'
     }
   ]);
+  const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
+
+  // Update the time displayed in the status screen
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString());
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
 
   // Mock function to cycle through players (for local testing)
   const cycleActivePlayer = () => {
     setActivePlayerIndex((prevIndex) => (prevIndex + 1) % players.length);
+    // Also update visible terminal to match active player
+    setVisibleTerminalIndex((prevIndex) => (prevIndex + 1) % players.length);
   };
 
   // Handle player input
@@ -160,6 +285,19 @@ function GameSession({ sessionId: propSessionId }) {
     ];
     
     return responses[Math.floor(Math.random() * responses.length)];
+  };
+
+  // Navigation functions for terminal cycling
+  const showPreviousTerminal = () => {
+    setVisibleTerminalIndex((prevIndex) => 
+      prevIndex === 0 ? players.length - 1 : prevIndex - 1
+    );
+  };
+
+  const showNextTerminal = () => {
+    setVisibleTerminalIndex((prevIndex) => 
+      (prevIndex + 1) % players.length
+    );
   };
 
   // Add mock players based on player count parameter
@@ -219,15 +357,46 @@ function GameSession({ sessionId: propSessionId }) {
         </VisualizationContainer>
         
         <TerminalsContainer>
+          <TerminalNavigation>
+            <NavButton 
+              onClick={showPreviousTerminal} 
+              disabled={players.length <= 1}
+            >
+              ◀ PREV
+            </NavButton>
+            <TerminalStatus>
+              NODE {visibleTerminalIndex + 1} / {players.length}
+            </TerminalStatus>
+            <NavButton 
+              onClick={showNextTerminal}
+              disabled={players.length <= 1}
+            >
+              NEXT ▶
+            </NavButton>
+          </TerminalNavigation>
+          
           {players.map((player, index) => (
-            <TerminalUI
-              key={player.id}
-              player={player}
-              messages={messages}
-              isActive={index === activePlayerIndex}
-              onSendMessage={handleSendMessage}
-            />
+            <div key={player.id} style={{ display: index === visibleTerminalIndex ? 'block' : 'none' }}>
+              <TerminalUI
+                player={player}
+                messages={messages}
+                isActive={index === activePlayerIndex}
+                onSendMessage={handleSendMessage}
+              />
+            </div>
           ))}
+          
+          {/* Status Screen - Positioned within TerminalsContainer */}
+          <StatusScreenContainer>
+            <StatusScreenHeader>
+              <StatusScreenTitle>NEXUS STATUS</StatusScreenTitle>
+              <span>{currentTime}</span>
+            </StatusScreenHeader>
+            <StatusScreenContent>
+              <StatusPlaceholder>VISUALIZATION</StatusPlaceholder>
+              <StatusPlaceholder>PENDING</StatusPlaceholder>
+            </StatusScreenContent>
+          </StatusScreenContainer>
         </TerminalsContainer>
       </MainContent>
     </GameContainer>
