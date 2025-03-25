@@ -2,42 +2,74 @@ import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 
 const TerminalContainer = styled.div`
-  background-color: #0c0c14;
-  border-radius: 8px;
-  padding: 1rem;
-  font-family: 'Roboto Mono', monospace;
-  color: #33ff33;
-  border: 1px solid #333;
+  background-color: #16213e;
+  border: 1px solid #444;
+  padding: 0;
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  color: #e0e0e0;
   height: 300px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
+  
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      transparent 0px,
+      rgba(0, 0, 0, 0.05) 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
 `;
 
 const TerminalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #333;
-  margin-bottom: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #2a2a40;
+  border-bottom: 1px solid #444;
 `;
 
 const TerminalTitle = styled.div`
-  font-weight: bold;
-  color: #aaaaff;
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: #e6c07b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 `;
 
 const TerminalStatus = styled.div`
-  font-size: 0.8rem;
-  color: ${props => props.active ? '#33ff33' : '#aaa'};
+  font-size: 0.7rem;
+  color: ${props => props.active ? '#98c379' : '#777'};
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+  &::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: ${props => props.active ? '#98c379' : '#777'};
+  }
 `;
 
 const TerminalOutput = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding-right: 0.5rem;
-  margin-bottom: 0.5rem;
+  padding: 1rem;
+  position: relative;
+  z-index: 2;
 
   /* Scrollbar styling */
   &::-webkit-scrollbar {
@@ -45,59 +77,86 @@ const TerminalOutput = styled.div`
   }
   
   &::-webkit-scrollbar-track {
-    background: #0c0c14;
+    background: #16213e;
   }
   
   &::-webkit-scrollbar-thumb {
-    background: #333;
+    background: #444;
     border-radius: 3px;
   }
 `;
 
 const MessageContainer = styled.div`
-  margin-bottom: 0.8rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
 `;
 
 const SystemMessage = styled.div`
-  color: #aaaaff;
+  color: #61afef;
   font-style: italic;
+  opacity: 0.8;
+  border-left: 2px solid #61afef;
+  padding-left: 0.5rem;
+  margin: 0.5rem 0;
 `;
 
 const NexusMessage = styled.div`
-  color: #33ff33;
+  color: #98c379;
 `;
 
 const PlayerMessage = styled.div`
-  color: ${props => props.isCurrentPlayer ? '#ffcc00' : '#ff66aa'};
+  color: ${props => props.isCurrentPlayer ? '#e6c07b' : '#c678dd'};
 `;
 
 const MessageSender = styled.span`
   font-weight: bold;
   margin-right: 0.5rem;
+  opacity: 0.9;
+`;
+
+const MessageContent = styled.div`
+  margin-top: 0.2rem;
+  margin-left: 0.5rem;
+  word-break: break-word;
 `;
 
 const TerminalInputContainer = styled.div`
   display: flex;
   align-items: center;
-  border-top: 1px solid #333;
-  padding-top: 0.5rem;
+  border-top: 1px solid #444;
+  padding: 0.75rem 1rem;
+  background-color: #2a2a40;
+  position: relative;
+  z-index: 2;
 `;
 
 const TerminalPrompt = styled.div`
-  color: #33ff33;
+  color: ${props => props.active ? '#61afef' : '#777'};
   margin-right: 0.5rem;
+  font-weight: 600;
 `;
 
 const InputField = styled.input`
   flex: 1;
   background-color: transparent;
   border: none;
-  color: #33ff33;
-  font-family: 'Roboto Mono', monospace;
+  color: ${props => props.disabled ? '#777' : '#e0e0e0'};
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-size: 0.9rem;
   
   &:focus {
     outline: none;
   }
+  
+  &::placeholder {
+    color: #555;
+  }
+`;
+
+const Timestamp = styled.span`
+  font-size: 0.7rem;
+  color: #777;
+  margin-left: 0.5rem;
 `;
 
 function TerminalUI({ 
@@ -124,10 +183,15 @@ function TerminalUI({
     }
   };
   
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  
   return (
     <TerminalContainer>
       <TerminalHeader>
-        <TerminalTitle>Terminal: {player.username}</TerminalTitle>
+        <TerminalTitle>Node: {player.username}</TerminalTitle>
         <TerminalStatus active={isActive}>
           {isActive ? 'ACTIVE' : 'STANDBY'}
         </TerminalStatus>
@@ -135,7 +199,7 @@ function TerminalUI({
       
       <TerminalOutput ref={outputRef}>
         <SystemMessage>
-          --- Connection established with The Nexus ---
+          --- Nexus connection established ---
         </SystemMessage>
         
         {messages.map((msg, index) => (
@@ -144,13 +208,13 @@ function TerminalUI({
               <SystemMessage>{msg.content}</SystemMessage>
             ) : msg.from === 'Nexus' ? (
               <NexusMessage>
-                <MessageSender>Nexus:</MessageSender>
-                {msg.content}
+                <MessageSender>NEXUS<Timestamp>{formatTime(msg.timestamp)}</Timestamp></MessageSender>
+                <MessageContent>{msg.content}</MessageContent>
               </NexusMessage>
             ) : (
               <PlayerMessage isCurrentPlayer={msg.from === player.username}>
-                <MessageSender>{msg.from}:</MessageSender>
-                {msg.content}
+                <MessageSender>{msg.from}<Timestamp>{formatTime(msg.timestamp)}</Timestamp></MessageSender>
+                <MessageContent>{msg.content}</MessageContent>
               </PlayerMessage>
             )}
           </MessageContainer>
@@ -159,13 +223,14 @@ function TerminalUI({
       
       <form onSubmit={handleSubmit}>
         <TerminalInputContainer>
-          <TerminalPrompt>{isActive ? '>' : '#'}</TerminalPrompt>
+          <TerminalPrompt active={isActive}>{isActive ? '>' : '#'}</TerminalPrompt>
           <InputField
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={isActive ? "Enter your response..." : "Waiting for your turn..."}
+            placeholder={isActive ? "Enter command..." : "Terminal locked"}
             disabled={!isActive}
+            spellCheck="false"
           />
         </TerminalInputContainer>
       </form>

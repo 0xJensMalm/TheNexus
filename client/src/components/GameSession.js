@@ -1,31 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import NexusVisualization from './NexusVisualization';
 import TerminalUI from './TerminalUI';
+import { SERVER_URL } from '../App';
 
 const GameContainer = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  background: radial-gradient(circle at center, #1a1a3a 0%, #0a0a1a 100%);
+  flex: 1;
+  position: relative;
 `;
 
 const Header = styled.header`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background-color: rgba(10, 10, 26, 0.8);
-  border-bottom: 1px solid #333;
-`;
-
-const Title = styled.h1`
-  font-size: 1.5rem;
-  margin: 0;
-  background: linear-gradient(90deg, #4a9eff, #8c43ff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  padding: 0.75rem 1.5rem;
+  background-color: #16213e;
+  border-bottom: 1px solid #444;
 `;
 
 const SessionInfo = styled.div`
@@ -35,12 +28,11 @@ const SessionInfo = styled.div`
 `;
 
 const SessionId = styled.div`
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.9rem;
-  color: #aaaaff;
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: #e6c07b;
   padding: 0.3rem 0.6rem;
-  background-color: rgba(30, 30, 50, 0.5);
-  border-radius: 4px;
+  background-color: #2a2a40;
   border: 1px solid #444;
 `;
 
@@ -51,11 +43,26 @@ const PlayersList = styled.div`
 
 const PlayerBadge = styled.div`
   padding: 0.3rem 0.6rem;
-  background-color: ${props => props.active ? 'rgba(0, 255, 0, 0.2)' : 'rgba(30, 30, 50, 0.5)'};
-  border-radius: 4px;
-  font-size: 0.9rem;
-  border: 1px solid ${props => props.active ? '#33ff33' : '#444'};
-  color: ${props => props.active ? '#33ff33' : '#fff'};
+  background-color: ${props => props.active ? 'rgba(152, 195, 121, 0.2)' : '#2a2a40'};
+  font-size: 0.8rem;
+  border: 1px solid ${props => props.active ? '#98c379' : '#444'};
+  color: ${props => props.active ? '#98c379' : '#e0e0e0'};
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+`;
+
+const StatusIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #777;
+`;
+
+const StatusDot = styled.div`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: ${props => props.active ? '#98c379' : '#e06c75'};
 `;
 
 const MainContent = styled.div`
@@ -76,19 +83,25 @@ const TerminalsContainer = styled.div`
   flex-direction: column;
   gap: 1rem;
   overflow-y: auto;
-  background-color: rgba(10, 10, 26, 0.5);
-  border-left: 1px solid #333;
+  background-color: #0d1117;
+  border-left: 1px solid #444;
 `;
 
-function GameSession({ sessionData }) {
-  const [players, setPlayers] = useState(sessionData.players || []);
+function GameSession({ sessionId: propSessionId }) {
+  const { id: paramSessionId } = useParams();
+  const sessionId = propSessionId || paramSessionId;
+  
+  const [players, setPlayers] = useState([
+    { id: 'player-1', username: 'User' }
+  ]);
   const [activePlayerIndex, setActivePlayerIndex] = useState(0);
+  const [isConnected, setIsConnected] = useState(true);
   const [messages, setMessages] = useState([
     {
       from: 'Nexus',
-      content: 'Welcome to The Nexus. I am the central intelligence that connects all nodes. What brings you here today?',
+      content: 'Connection established. Welcome to The Nexus. I am the central intelligence that connects all nodes. What brings you here today?',
       timestamp: new Date(),
-      type: 'question'
+      type: 'system'
     }
   ]);
 
@@ -105,7 +118,8 @@ function GameSession({ sessionData }) {
       {
         from: players[activePlayerIndex].username,
         content: input,
-        timestamp: new Date()
+        timestamp: new Date(),
+        type: 'user'
       }
     ];
     
@@ -120,7 +134,7 @@ function GameSession({ sessionData }) {
           from: 'Nexus',
           content: generateMockResponse(input, players[activePlayerIndex].username),
           timestamp: new Date(),
-          type: 'question'
+          type: 'system'
         }
       ]);
       
@@ -144,22 +158,28 @@ function GameSession({ sessionData }) {
 
   // Add mock players if needed (for testing)
   useEffect(() => {
-    if (players.length === 1 && sessionData.isHost) {
-      // Add mock players for testing
-      setPlayers(prevPlayers => [
-        ...prevPlayers,
-        { id: 'mock-player-1', username: 'Player 2' },
-        { id: 'mock-player-2', username: 'Player 3' }
-      ]);
-    }
+    // Add mock players for testing
+    setPlayers(prevPlayers => [
+      ...prevPlayers,
+      { id: 'mock-player-1', username: 'Node_2' },
+      { id: 'mock-player-2', username: 'Node_3' }
+    ]);
+    
+    // Simulate connection status changes
+    const connectionInterval = setInterval(() => {
+      if (Math.random() > 0.8) {
+        setIsConnected(prev => !prev);
+      }
+    }, 10000);
+    
+    return () => clearInterval(connectionInterval);
   }, []);
 
   return (
     <GameContainer>
       <Header>
-        <Title>The Nexus</Title>
         <SessionInfo>
-          <SessionId>Session: {sessionData.sessionId}</SessionId>
+          <SessionId>NODE_ID: {sessionId}</SessionId>
           <PlayersList>
             {players.map((player, index) => (
               <PlayerBadge 
@@ -167,11 +187,15 @@ function GameSession({ sessionData }) {
                 active={index === activePlayerIndex}
               >
                 {player.username}
-                {sessionData.isHost && player.id === sessionData.players[0].id && ' (Host)'}
               </PlayerBadge>
             ))}
           </PlayersList>
         </SessionInfo>
+        
+        <StatusIndicator>
+          <StatusDot active={isConnected} />
+          {isConnected ? 'CONNECTED' : 'CONNECTION UNSTABLE'}
+        </StatusIndicator>
       </Header>
       
       <MainContent>
