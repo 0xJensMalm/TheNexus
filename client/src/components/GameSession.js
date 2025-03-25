@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import NexusVisualization from './NexusVisualization';
 import TerminalUI from './TerminalUI';
 import { SERVER_URL } from '../App';
+import theme from '../theme';
 
 const GameContainer = styled.div`
   display: flex;
@@ -17,8 +18,8 @@ const Header = styled.header`
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1.5rem;
-  background-color: #16213e;
-  border-bottom: 1px solid #444;
+  background-color: ${theme.colors.background.secondary};
+  border-bottom: 1px solid ${theme.colors.border.primary};
 `;
 
 const SessionInfo = styled.div`
@@ -28,12 +29,12 @@ const SessionInfo = styled.div`
 `;
 
 const SessionId = styled.div`
-  font-family: 'IBM Plex Mono', 'Courier New', monospace;
-  font-size: 0.8rem;
-  color: #e6c07b;
+  font-family: ${theme.fonts.primary};
+  font-size: ${theme.fonts.sizes.sm};
+  color: ${theme.colors.text.accent};
   padding: 0.3rem 0.6rem;
-  background-color: #2a2a40;
-  border: 1px solid #444;
+  background-color: ${theme.colors.background.tertiary};
+  border: 1px solid ${theme.colors.border.primary};
 `;
 
 const PlayersList = styled.div`
@@ -43,26 +44,26 @@ const PlayersList = styled.div`
 
 const PlayerBadge = styled.div`
   padding: 0.3rem 0.6rem;
-  background-color: ${props => props.active ? 'rgba(152, 195, 121, 0.2)' : '#2a2a40'};
-  font-size: 0.8rem;
-  border: 1px solid ${props => props.active ? '#98c379' : '#444'};
-  color: ${props => props.active ? '#98c379' : '#e0e0e0'};
-  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  background-color: ${props => props.active ? 'rgba(152, 195, 121, 0.2)' : theme.colors.background.tertiary};
+  font-size: ${theme.fonts.sizes.sm};
+  border: 1px solid ${props => props.active ? theme.colors.text.success : theme.colors.border.primary};
+  color: ${props => props.active ? theme.colors.text.success : theme.colors.text.primary};
+  font-family: ${theme.fonts.primary};
 `;
 
 const StatusIndicator = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.8rem;
-  color: #777;
+  font-size: ${theme.fonts.sizes.sm};
+  color: ${theme.colors.text.secondary};
 `;
 
 const StatusDot = styled.div`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: ${props => props.active ? '#98c379' : '#e06c75'};
+  background-color: ${props => props.active ? theme.colors.text.success : theme.colors.text.error};
 `;
 
 const MainContent = styled.div`
@@ -83,13 +84,18 @@ const TerminalsContainer = styled.div`
   flex-direction: column;
   gap: 1rem;
   overflow-y: auto;
-  background-color: #0d1117;
-  border-left: 1px solid #444;
+  background-color: ${theme.colors.background.primary};
+  border-left: 1px solid ${theme.colors.border.primary};
 `;
 
 function GameSession({ sessionId: propSessionId }) {
   const { id: paramSessionId } = useParams();
+  const location = useLocation();
   const sessionId = propSessionId || paramSessionId;
+  
+  // Get player count from URL query parameter
+  const queryParams = new URLSearchParams(location.search);
+  const playerCountParam = parseInt(queryParams.get('players'), 10) || 2;
   
   const [players, setPlayers] = useState([
     { id: 'player-1', username: 'User' }
@@ -156,14 +162,20 @@ function GameSession({ sessionId: propSessionId }) {
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  // Add mock players if needed (for testing)
+  // Add mock players based on player count parameter
   useEffect(() => {
-    // Add mock players for testing
-    setPlayers(prevPlayers => [
-      ...prevPlayers,
-      { id: 'mock-player-1', username: 'Node_2' },
-      { id: 'mock-player-2', username: 'Node_3' }
-    ]);
+    // Create mock players based on the player count parameter
+    const mockPlayers = [];
+    
+    // Keep the first player (User)
+    mockPlayers.push({ id: 'player-1', username: 'User' });
+    
+    // Add additional players based on player count
+    for (let i = 2; i <= playerCountParam; i++) {
+      mockPlayers.push({ id: `mock-player-${i-1}`, username: `Node_${i}` });
+    }
+    
+    setPlayers(mockPlayers);
     
     // Simulate connection status changes
     const connectionInterval = setInterval(() => {
@@ -173,7 +185,7 @@ function GameSession({ sessionId: propSessionId }) {
     }, 10000);
     
     return () => clearInterval(connectionInterval);
-  }, []);
+  }, [playerCountParam]);
 
   return (
     <GameContainer>

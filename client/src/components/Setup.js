@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { SERVER_URL } from '../App';
+import theme from '../theme';
 
 const SetupContainer = styled.div`
   flex: 1;
@@ -13,8 +14,8 @@ const SetupContainer = styled.div`
 `;
 
 const SetupCard = styled.div`
-  background-color: #16213e;
-  border: 1px solid #444;
+  background-color: ${theme.colors.background.secondary};
+  border: 1px solid ${theme.colors.border.primary};
   padding: 2.5rem;
   width: 100%;
   max-width: 600px;
@@ -28,22 +29,22 @@ const SetupCard = styled.div`
     left: 0;
     width: 100%;
     height: 4px;
-    background: linear-gradient(90deg, #e6c07b, #61afef);
+    background: ${theme.colors.gradients.header};
   }
 `;
 
 const TerminalHeader = styled.div`
-  background-color: #2a2a40;
+  background-color: ${theme.colors.background.tertiary};
   margin: -2.5rem -2.5rem 1.5rem -2.5rem;
   padding: 0.5rem 1rem;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid ${theme.colors.border.primary};
   display: flex;
   justify-content: space-between;
   align-items: center;
 `;
 
 const TerminalTitle = styled.div`
-  color: #e6c07b;
+  color: ${theme.colors.text.accent};
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -62,19 +63,10 @@ const TerminalControl = styled.div`
   background-color: ${props => props.color};
 `;
 
-const Subtitle = styled.h2`
-  text-align: center;
-  margin-bottom: 2rem;
-  font-size: 1.2rem;
-  color: #98c379;
-  font-weight: 400;
-  letter-spacing: 1px;
-`;
-
 const TerminalContent = styled.div`
   margin-bottom: 2rem;
-  font-family: 'IBM Plex Mono', 'Courier New', monospace;
-  color: #e0e0e0;
+  font-family: ${theme.fonts.primary};
+  color: ${theme.colors.text.primary};
   line-height: 1.6;
 `;
 
@@ -84,28 +76,28 @@ const TerminalLine = styled.div`
 `;
 
 const TerminalPrompt = styled.span`
-  color: #61afef;
+  color: ${theme.colors.text.info};
   margin-right: 0.5rem;
 `;
 
 const TerminalOutput = styled.div`
   margin-bottom: 1rem;
-  color: ${props => props.color || '#e0e0e0'};
+  color: ${props => props.color || theme.colors.text.primary};
 `;
 
 const Input = styled.input`
   padding: 0.75rem;
-  border: 1px solid #555;
-  background-color: #2a2a40;
-  color: #e0e0e0;
-  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  border: 1px solid ${theme.colors.border.primary};
+  background-color: ${theme.colors.background.tertiary};
+  color: ${theme.colors.text.primary};
+  font-family: ${theme.fonts.primary};
   margin-bottom: 1.5rem;
   width: 100%;
   font-size: 1rem;
 
   &:focus {
     outline: none;
-    border-color: #e6c07b;
+    border-color: ${theme.colors.text.accent};
     box-shadow: 0 0 5px rgba(230, 192, 123, 0.3);
   }
 `;
@@ -122,11 +114,11 @@ const Button = styled.button`
   padding: 0.75rem 1.5rem;
   font-weight: 600;
   transition: all 0.2s ease;
-  background-color: ${props => props.primary ? '#2a2a40' : 'transparent'};
-  color: ${props => props.primary ? '#e6c07b' : '#777'};
-  border: 1px solid ${props => props.primary ? '#e6c07b' : '#444'};
+  background-color: ${props => props.primary ? theme.colors.background.tertiary : 'transparent'};
+  color: ${props => props.primary ? theme.colors.text.accent : theme.colors.text.secondary};
+  border: 1px solid ${props => props.primary ? theme.colors.text.accent : theme.colors.border.primary};
   outline: none;
-  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-family: ${theme.fonts.primary};
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -137,9 +129,9 @@ const Button = styled.button`
   }
 
   &:disabled {
-    background-color: #2a2a40;
-    border-color: #555;
-    color: #777;
+    background-color: ${theme.colors.background.tertiary};
+    border-color: ${theme.colors.border.primary};
+    color: ${theme.colors.text.secondary};
     cursor: not-allowed;
     box-shadow: none;
   }
@@ -151,11 +143,46 @@ const SessionIdInput = styled.div`
 `;
 
 const ErrorMessage = styled.div`
-  color: #e06c75;
+  color: ${theme.colors.text.error};
   margin-bottom: 1rem;
   padding: 0.5rem;
-  border-left: 3px solid #e06c75;
+  border-left: 3px solid ${theme.colors.text.error};
   background-color: rgba(224, 108, 117, 0.1);
+`;
+
+const PlayerCountSelector = styled.div`
+  margin-top: 1.5rem;
+  display: ${props => props.show ? 'block' : 'none'};
+`;
+
+const PlayerCountButtons = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+`;
+
+const PlayerCountButton = styled.button`
+  flex: 1;
+  padding: 0.5rem;
+  background-color: ${props => props.selected ? '#3a3a50' : '#2a2a40'};
+  color: ${props => props.selected ? theme.colors.text.accent : theme.colors.text.primary};
+  border: 1px solid ${props => props.selected ? theme.colors.text.accent : theme.colors.border.primary};
+  font-family: ${theme.fonts.primary};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: ${props => props.selected ? '#3a3a50' : '#222'};
+  }
+`;
+
+const Subtitle = styled.h2`
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.2rem;
+  color: ${theme.colors.text.primary};
+  font-weight: 400;
+  letter-spacing: 1px;
 `;
 
 function Setup({ onSessionCreated }) {
@@ -165,6 +192,7 @@ function Setup({ onSessionCreated }) {
   const [joinMode, setJoinMode] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [playerCount, setPlayerCount] = useState(2);
 
   const handleSubmit = async () => {
     if (!username) {
@@ -194,7 +222,13 @@ function Setup({ onSessionCreated }) {
       
       // Set the session ID and navigate to the session
       onSessionCreated(newSessionId);
-      navigate(`/session/${newSessionId}`);
+      
+      // Pass player count as a URL parameter when creating a new session
+      if (!joinMode) {
+        navigate(`/session/${newSessionId}?players=${playerCount}`);
+      } else {
+        navigate(`/session/${newSessionId}`);
+      }
     } catch (err) {
       setError(`ERROR: ${err.message || 'Failed to connect to Nexus'}`);
     } finally {
@@ -256,6 +290,32 @@ function Setup({ onSessionCreated }) {
             Join Node
           </Button>
         </ButtonGroup>
+        
+        <PlayerCountSelector show={!joinMode}>
+          <TerminalLine style={{ marginTop: '1rem' }}>
+            <TerminalPrompt>nexus:~$</TerminalPrompt>
+            <span>set_player_count</span>
+          </TerminalLine>
+          
+          <TerminalOutput>
+            Select the number of players for this Nexus session:
+          </TerminalOutput>
+          
+          <PlayerCountButtons>
+            <PlayerCountButton 
+              selected={playerCount === 2} 
+              onClick={() => setPlayerCount(2)}
+            >
+              2 Players
+            </PlayerCountButton>
+            <PlayerCountButton 
+              selected={playerCount === 3} 
+              onClick={() => setPlayerCount(3)}
+            >
+              3 Players
+            </PlayerCountButton>
+          </PlayerCountButtons>
+        </PlayerCountSelector>
         
         <SessionIdInput show={joinMode}>
           <TerminalLine style={{ marginTop: '1rem' }}>
